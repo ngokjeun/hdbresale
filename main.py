@@ -1,6 +1,8 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import requests
+from zipfile import ZipFile
 
 st.set_page_config(page_title="HDB Resale Prices",
                    page_icon=":house:",
@@ -10,8 +12,12 @@ st.set_page_config(page_title="HDB Resale Prices",
 
 @st.cache
 def get_data_from_csv():
-    df = pd.read_csv("resale_prices.csv")
-
+    URL = "https://data.gov.sg/dataset/7a339d20-3c57-4b11-a695-9348adfd7614/download"
+    response = requests.get(URL)
+    open("data.zip", "wb").write(response.content)
+    with ZipFile("data.zip", 'r') as zip:
+        zip.extract("resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv", "data")
+    df = pd.read_csv("data/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv")
     # add 'Month' column to df
     df["Month"] = pd.to_datetime(df["month"], format="%Y-%m").dt.month
     return df
