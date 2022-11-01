@@ -81,6 +81,10 @@ fig_type_price = px.bar(
     median_price_by_type,
     y="resale_price",
     x=median_price_by_type.index,
+    labels={
+            "flat_type": "Flat Type",
+            "resale_price": "Resale Price (SGD)",
+            },
     orientation="v",
     title="<em>Median Resale Price by Type</em>",
     color_discrete_sequence=["#0083B8"]*len(median_price_by_type),
@@ -97,6 +101,10 @@ fig_resale_month = px.line(
     resale_by_month,
     x=resale_by_month.index,
     y=resale_by_month["month"],
+    labels={
+            "Month": "Month",
+            "month": "Number of Flats Resold",
+            },
     title="<em>Resale Numbers by Month</em>",
     color_discrete_sequence=["#0083B8"]*len(resale_by_month),
     range_x=[1, 12],
