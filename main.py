@@ -20,6 +20,7 @@ def get_data_from_csv():
     df = pd.read_csv("data/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv")
     # add 'Month' column to df
     df["Month"] = pd.to_datetime(df["month"], format="%Y-%m").dt.month
+    df["year"] = pd.to_datetime(df["month"], format="%Y-%m").dt.year
     return df
 
 
@@ -41,13 +42,18 @@ Town = st.sidebar.multiselect(
     default=df["town"].unique()
 )
 
-
-df_selection = df.query(
-    "town == @Town & flat_type == @Flat_type"
-
+Year = st.sidebar.multiselect(
+    "Select the Year:",
+    options=df["year"].unique(),
+    default=2022
 )
 
-st.title(":bar_chart: HDB Resale Stats for 2022")
+
+df_selection = df.query(
+    "town == @Town & flat_type == @Flat_type & year == @Year" 
+)
+
+st.title(":bar_chart: HDB Resale Stats for 2017-2022")
 st.markdown("##")
 
 median_sqm = int(df_selection["floor_area_sqm"].median())
