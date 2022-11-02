@@ -3,6 +3,10 @@ import plotly.express as px
 import streamlit as st
 import requests
 from zipfile import ZipFile
+# import seaborn as sns
+# import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 
 st.set_page_config(page_title="HDB Resale Prices",
                    page_icon=":house:",
@@ -21,10 +25,29 @@ def get_data_from_csv():
     # add 'Month' column to df
     df["Month"] = pd.to_datetime(df["month"], format="%Y-%m").dt.month
     df["year"] = pd.to_datetime(df["month"], format="%Y-%m").dt.year
+    df.loc[df['flat_type'] == "1 ROOM", "flat_kind"] = 1
+    df.loc[df['flat_type'] == "2 ROOM", "flat_kind"] = 2
+    df.loc[df['flat_type'] == "3 ROOM", "flat_kind"] = 3
+    df.loc[df['flat_type'] == "4 ROOM", "flat_kind"] = 4
+    df.loc[df['flat_type'] == "5 ROOM", "flat_kind"] = 5
+    df.loc[df['flat_type'] == "EXECUTIVE", "flat_kind"] = 6
+    df.loc[df['flat_type'] == "MULTI_GENERATION", "flat_kind"] = 7
+    #clean
+    df.dropna(inplace=True) 
     return df
 
 
 df = get_data_from_csv()
+
+# --LR--
+#model
+x = df[["floor_area_sqm", "lease_commence_date", "flat_kind"]]
+y = df["resale_price"]
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])
+
 
 # -- sidebar --
 
@@ -119,6 +142,32 @@ fig_resale_month.update_layout(
 left_column, right_column = st.columns(2)
 left_column.plotly_chart(fig_type_price, use_container_width=True)
 right_column.plotly_chart(fig_resale_month, use_container_width=True)
+
+st.markdown("---")
+
+# -- prediction --
+st.title("HDB Resale Price Prediction")
+st.write("This section is independent of sidebar selections. Price is calculated with a linear regression model.")
+st.subheader("Flat Type")
+flat_select = st.slider("Number of rooms, 6 for Executive and 7 for Multi-Gen", value=4, min_value=1, max_value=7, step=1)
+st.subheader("Lease Commence Year")
+year_select = st.slider("Year", value=1998, min_value=int(df.lease_commence_date.min()), max_value=int(df.lease_commence_date.max()), step=1)
+st.subheader("Floor Space")
+sqm_select = st.slider("In SQM (You may use the tool above to get a representative number)", value=93.0, min_value=float(df.floor_area_sqm.min()), max_value=float(df.floor_area_sqm.max()), step=0.5)
+
+price_predicted = lr.predict([[sqm_select, year_select, flat_select]])[0]
+
+html_str = f"""
+<style>
+p.a {{
+  font: bold 40px Courier;
+  color: #0FFF50;
+}}
+</style>
+<p class="a">${price_predicted:.2f}</p>
+"""
+
+st.markdown(html_str, unsafe_allow_html=True)
 
 
 # hide st
