@@ -179,13 +179,10 @@ if selected == "home":
     #converting user inputs
     ordinal_date = dt.datetime.toordinal(pd.to_datetime(date_select, format='%Y-%m'))
     town_select_list = [0] * 26
-    for i in df_town:
-        if town_select == "YISHUN":
-            town_select_list = town_select_list[:t_index-1]+[1]
-        elif town_select != "YISHUN":
-            if town_select in i:
-                t_index = df_town.columns.get_loc(i) - 12        
-                town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
+    for i in df_town.columns:
+         if town_select in i:
+             t_index = df_town.columns.get_loc(i) - 14
+             town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
     user_list = [year_select, flat_select, ordinal_date] + town_select_list
 
     price_predicted = lr.predict([user_list])[0]
@@ -210,13 +207,10 @@ if selected == "the model":
     st.write("Converting user inputs was the most challenging part, as I have yet to understand labeling of nominal categorical variables after encoding(i.e. town). Hence I populated a list of 0s and 1s with a for loop.")
     st.code("""
     town_select_list = [0] * 26
-    for i in df_town:
-        if town_select == "YISHUN": 
-            town_select_list = town_select_list[:t_index-1]+[1] #Yishun occupies the last index
-        elif town_select != "YISHUN":
-            if town_select in i:
-                t_index = df_town.columns.get_loc(i) - 12        
-                town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
+    for i in df_town.columns:
+         if town_select in i:
+             t_index = df_town.columns.get_loc(i) - 14
+             town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
     user_list = [year_select, flat_select, ordinal_date] + town_select_list
     """)
     st.write("As data.gov.sg provided the dataset with the sale timestamp as a string, I converted it into an ordinal date for use with the model. date_select is a text input.")
