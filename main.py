@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from streamlit_option_menu import option_menu
+import datetime as dt
+from sklearn import metrics
 
 
 st.set_page_config(page_title="HDB Resale Prices",
@@ -40,14 +42,22 @@ def get_data_from_csv():
 
 df = get_data_from_csv()
 
+
 # --LR--
+#clean 
+df_town = pd.concat([df,pd.get_dummies(df.town, prefix='town')],axis=1)
+df_town['sale_date'] = pd.to_datetime(df_town['month'], format='%Y-%m')
+df_town['sale_date'] = df_town['sale_date'].map(dt.datetime.toordinal)
+
 #model
-x = df[["floor_area_sqm", "lease_commence_date", "flat_kind"]]
-y = df["resale_price"]
+add_prefix = ["town_" + town for town in list(df.town.unique())]
+x = ['lease_commence_date', 'flat_kind', 'sale_date', 'town_ANG MO KIO', 'town_BEDOK', 'town_BISHAN', 'town_BUKIT BATOK', 'town_BUKIT MERAH', 'town_BUKIT PANJANG', 'town_BUKIT TIMAH', 'town_CENTRAL AREA', 'town_CHOA CHU KANG', 'town_CLEMENTI', 'town_GEYLANG', 'town_HOUGANG', 'town_JURONG EAST', 'town_JURONG WEST', 'town_KALLANG/WHAMPOA', 'town_MARINE PARADE', 'town_PASIR RIS', 'town_PUNGGOL', 'town_QUEENSTOWN', 'town_SEMBAWANG', 'town_SENGKANG', 'town_SERANGOON', 'town_TAMPINES', 'town_TOA PAYOH', 'town_WOODLANDS', 'town_YISHUN']
+x = df_town[x]
+y = df_town["resale_price"]
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
 lr = LinearRegression()
 lr.fit(X_train, y_train)
-coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])
+# coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])
 
 
 # -- sidebar --
@@ -101,9 +111,9 @@ if selected == "home":
     with right_column:
         st.subheader("Median Resale Price:")
         st.subheader(f"SGD {median_resale_price:,}")
-
+    st.write("Data is currently incomplete for 2022.")
     st.markdown("---")
-
+# how to write in streamlit 
     median_price_by_type = (
         df_selection.groupby(["flat_type"]).median()["resale_price"])
 
@@ -160,19 +170,31 @@ if selected == "home":
     flat_select = st.slider("Number of rooms, 6 for Executive and 7 for Multi-Gen", value=4, min_value=1, max_value=7, step=1)
     st.subheader("Lease Commence Year")
     year_select = st.slider("Year", value=1998, min_value=int(df.lease_commence_date.min()), max_value=int(df.lease_commence_date.max()), step=1)
-    st.subheader("Floor Space")
-    sqm_select = st.slider("In SQM (You may use the tool above to get a representative number)", value=93.0, min_value=float(df.floor_area_sqm.min()), max_value=float(df.floor_area_sqm.max()), step=0.5)
+    town_select = st.selectbox("Select the Town:",
+        options=df["town"].unique(),
+        key = "not_sidebar"
+        )
+    date_select = st.text_input("Key in the date: i.e. YYYY-MM", "2022-09")
 
-    price_predicted = lr.predict([[sqm_select, year_select, flat_select]])[0]
+    #converting user inputs
+    ordinal_date = dt.datetime.toordinal(pd.to_datetime(date_select, format='%Y-%m'))
+    town_select_list = [0] * 26
+    for i in df_town:   
+        if town_select in i:
+            t_index = df_town.columns.get_loc(i) - 12        
+            town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
+    user_list = [year_select, flat_select, ordinal_date] + town_select_list
+
+    price_predicted = lr.predict([user_list])[0]
 
     html_str = f"""
     <style>
     p.a {{
     font: bold 40px Courier;
-    color: #0FFF50;
+    color: #5dc0fc;
     }}
     </style>
-    <p class="a">${price_predicted:.2f}</p>
+    <p class="a">${price_predicted:,.0f}</p>
     """
 
     st.markdown(html_str, unsafe_allow_html=True)
@@ -180,35 +202,58 @@ if selected == "home":
 if selected == "the model":
     st.title("the model")
     st.markdown("**A simple scikit linear regression model was used in this demonstration**")
-
-    st.write("Making suitable DataFrames")
-    st.info('x = df[["floor_area_sqm", "lease_commence_date", "flat_kind"]]')
-    st.info('y = df["resale_price"]")')
+    st.write("To include town as a variable, I represented it as a dummy variable.")
+    st.code("df_town = pd.concat([df,pd.get_dummies(df.town, prefix='town')],axis=1)")
+    st.write("Converting user inputs was the most challenging part, as I have yet to understand labeling of nominal categorical variables after encoding(i.e. town). Hence I populated a list of 0s and 1s with a for loop.")
+    st.code("""
+    town_select_list = [0] * 26
+    for i in df_town.columns:
+        if town_select in i:
+            t_index = df_town.columns.get_loc(i) - 12
+            town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
+    """)
+    st.write("As data.gov.sg provided the dataset with the sale timestamp, I converted it into an ordinal date for use with the model. date_select is a text input.")
+    st.code("ordinal_date = dt.datetime.toordinal(pd.to_datetime(date_select,format=%Y-%m))")
+    st.write("Making suitable DataFrames to train")
+    st.code('''
+    add_prefix = ["town_" + town for town in list(df.town.unique())]
+    x = ['lease_commence_date', 'flat_kind', 'sale_date', 'town_ANG MO KIO', 'town_BEDOK', 'town_BISHAN', 'town_BUKIT BATOK', 'town_BUKIT MERAH', 'town_BUKIT PANJANG', 'town_BUKIT TIMAH', 'town_CENTRAL AREA', 'town_CHOA CHU KANG', 'town_CLEMENTI', 'town_GEYLANG', 'town_HOUGANG', 'town_JURONG EAST', 'town_JURONG WEST', 'town_KALLANG/WHAMPOA', 'town_MARINE PARADE', 'town_PASIR RIS', 'town_PUNGGOL', 'town_QUEENSTOWN', 'town_SEMBAWANG', 'town_SENGKANG', 'town_SERANGOON', 'town_TAMPINES', 'town_TOA PAYOH', 'town_WOODLANDS', 'town_YISHUN']
+    x = df_town[x]
+    y = df_town["resale_price"]
+    ''')
     st.write("Splitting the data into training and testing sets")
-    st.info("X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)")
+    st.code("X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)")
     st.write("Creating a linear regression object with scikit")
-    st.info("lr = LinearRegression()")
+    st.code("lr = LinearRegression()")
     st.write("Train the model using sets specified")
-    st.info("lr.fit(X_train, y_train)")
+    st.code("lr.fit(X_train, y_train)")
     st.write("The coefficients")
-    st.info('coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])')
+    st.code('coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])')
     lr = LinearRegression()
     lr.fit(X_train, y_train)
     coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])
-    st.info(coeff_df)
+    st.dataframe(coeff_df)
     st.write("Predict for test set")
-    st.info("predictions = lr.predict(X_test)")
+    st.code("predictions = lr.predict(X_test)")
     st.write("Plot predictions against actual")
-    st.info("px.scatter(y_test, predictions)")
+    st.code("px.scatter(y_test, predictions)")
     predictions = lr.predict(X_test)
     fig_scatter = px.scatter(x=y_test, y=predictions)
     st.plotly_chart(fig_scatter)
-    st.write("As the model becomes more accurate, we would expect a upwards-sloping, linear line. It is likely that including the town where the flats are located will help the model determine price significantly more accurately.")
+    st.write("As the model becomes more accurate, we would expect a upwards-sloping, linear line. In the previous version of this model, the flat area was used as a variable. However, since flat area is dependent on flat type (95% correlated), it was not an independent variable, hence was removed from the model.")
     st.write("Plot prediction distribution")
-    st.info("px.histogram((y_test-predictions))")
+    st.code("px.histogram((y_test-predictions))")
     fig_hist = px.histogram((y_test-predictions))
     st.plotly_chart(fig_hist)
     st.write("This distribution graph is in the shape we expect. As the model becomes more accurate, the spread becomes tighter.")
+    st.write("To find the R^2 value, we use the score function")
+    st.code("metrics.r2_score(y_test, predictions)")
+    st.write(metrics.r2_score(y_test, predictions))
+    st.write("The R^2 value is around 0.8, which is decent for a linear regressor but not good enough for production. It can be improved with another model, like a Random Forest Regressor, or by including more variables")
+    st.write("To find the Mean Absolute Error, we use the mean_absolute_error function")
+    st.code("metrics.mean_absolute_error(y_test, predictions)")
+    st.write(metrics.mean_absolute_error(y_test, predictions))
+    st.write("The Mean Absolute Error shows that the model is off by around $57,000 on average.")
 
 
 
