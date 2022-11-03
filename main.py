@@ -212,7 +212,7 @@ if selected == "the model":
             t_index = df_town.columns.get_loc(i) - 12
             town_select_list = town_select_list[:t_index]+[1]+town_select_list[t_index+1:]
     """)
-    st.write("As data.gov.sg provided the dataset with the sale timestamp, I converted it into an ordinal date for use with the model. date_select is a text input.")
+    st.write("As data.gov.sg provided the dataset with the sale timestamp as a string, I converted it into an ordinal date for use with the model. date_select is a text input.")
     st.code("ordinal_date = dt.datetime.toordinal(pd.to_datetime(date_select,format=%Y-%m))")
     st.write("Making suitable DataFrames to train")
     st.code('''
