@@ -109,11 +109,12 @@ if selected == "home":
     with right_column:
         st.subheader("Median Resale Price:")
         st.subheader(f"SGD {median_resale_price:,}")
-
+    st.write("Data is currently incomplete for 2022.")
     st.markdown("---")
-
+# how to write in streamlit 
     median_price_by_type = (
         df_selection.groupby(["flat_type"]).median()["resale_price"])
+
 
     fig_type_price = px.bar(
         median_price_by_type,
@@ -153,8 +154,6 @@ if selected == "home":
         plot_bgcolor="rgba(0,0,0,0)",
         yaxis=(dict(showgrid=False))
     )
-
-    st.write("Data is currently incomplete for 2022.")
 
     left_column, right_column = st.columns(2)
     left_column.plotly_chart(fig_type_price, use_container_width=True)
@@ -211,7 +210,7 @@ if selected == "home":
 
 if selected == "the model":
     st.title("the model")
-    st.markdown("**scikit linear and random forest regression models were used in this demonstration**")
+    st.markdown("**Scikit linear and random forest regression models were used in this demonstration**")
     st.write("To include town as a variable, I represented it as a dummy variable.")
     st.code("df_town = pd.concat([df,pd.get_dummies(df.town, prefix='town')],axis=1)")
     st.write("Converting user inputs was a challenge, as I have yet to understand labeling of nominal categorical variables after encoding(i.e. town). Hence I populated a list of 0s and 1s with a for loop.")
@@ -225,22 +224,22 @@ if selected == "the model":
     """)
     st.write("As data.gov.sg provided the dataset with the sale timestamp as a string, I converted it into an ordinal date for use with the model. date_select is a text input.")
     st.code("ordinal_date = dt.datetime.toordinal(pd.to_datetime(date_select,format=%Y-%m))")
-    st.write("***Making suitable DataFrames to train***")
+    st.write("Making suitable DataFrames to train")
     st.code('''
     add_prefix = ["town_" + town for town in list(df.town.unique())]
     x = ['lease_commence_date', 'flat_kind', 'sale_date', 'town_ANG MO KIO', 'town_BEDOK', 'town_BISHAN', 'town_BUKIT BATOK', 'town_BUKIT MERAH', 'town_BUKIT PANJANG', 'town_BUKIT TIMAH', 'town_CENTRAL AREA', 'town_CHOA CHU KANG', 'town_CLEMENTI', 'town_GEYLANG', 'town_HOUGANG', 'town_JURONG EAST', 'town_JURONG WEST', 'town_KALLANG/WHAMPOA', 'town_MARINE PARADE', 'town_PASIR RIS', 'town_PUNGGOL', 'town_QUEENSTOWN', 'town_SEMBAWANG', 'town_SENGKANG', 'town_SERANGOON', 'town_TAMPINES', 'town_TOA PAYOH', 'town_WOODLANDS', 'town_YISHUN']
     x = df_town[x]
     y = df_town["resale_price"]
     ''')
-    st.write("***Splitting the data into training and testing sets***")
+    st.write("Splitting the data into training and testing sets")
     st.code("X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42) #this is used for both linear and random forest regressors")
-    st.write("***Creating a linear regression object with scikit***")
+    st.write("Creating a linear regression object with scikit")
     st.code("lr = LinearRegression()")
     st.code("rfr = RandomForestRegressor() #parameters can be added to increase speed, I used min_samples_split=3, n_estimators=20, min_samples_leaf = 1")
-    st.write("***Train the model using sets specified***")
+    st.write("Train the model using sets specified")
     st.code("lr.fit(X_train, y_train)")
     st.code("rfr.fit(X_train, y_train)")
-    st.write("***Get the coefficients from linear regression***")
+    st.write("The coefficients from linear regression")
     st.code('coeff_df = pd.DataFrame(lr.coef_,x.columns, columns = ["Coefficient"])')
     lr = LinearRegression()
     lr.fit(X_train, y_train)
@@ -250,7 +249,7 @@ if selected == "the model":
     rfr.fit(X_train, y_train)
     st.write("Predict for test set")
     st.code("predictions = lr.predict(X_test)")
-    st.code("predictions_rfr = rfr.predict(X_test)")
+    st.code("predictions = rfr.predict(X_test)")
     st.markdown("***Plot predictions against actual***")
     st.code("px.scatter(y_test, predictions)")
     st.code("px.scatter(y_test, predictions_rfr)")
@@ -279,18 +278,17 @@ if selected == "the model":
         fig_hist_rfr = px.histogram((y_test-predictions_rfr))
         st.plotly_chart(fig_hist_rfr, use_container_width=True)
     st.write("This distribution graph is in the bell shape we expect. As the model becomes more accurate, the spread becomes tighter. We can see that the distribution of predictions for the random forest regressor is significantly tighter than the linear regression model.")
-    st.write("***To find the R^2 value, we use the score function***")
+    st.write("To find the R^2 value, we use the score function")
     st.code("metrics.r2_score(y_test, predictions)")
     st.code("metrics.r2_score(y_test, predictions_rfr)")
     st.write(metrics.r2_score(y_test, predictions), metrics.r2_score(y_test, predictions_rfr))
-    st.write("The R^2 value is around 0.8, which is decent for a linear regressor. The R^2 value of around 0.9 of the random forest regressor is improved.")
-    st.write("***To find the Mean Absolute Error, we use the mean_absolute_error function***")
+    st.write("The R^2 value is around 0.8, which is decent for a linear regressor. The R^2 value of around 0.9 of the random forest regressor is improved")
+    st.write("To find the Mean Absolute Error, we use the mean_absolute_error function")
     st.code("metrics.mean_absolute_error(y_test, predictions)")
     st.code("metrics.mean_absolute_error(y_test, predictions_rfr)")
     st.write(metrics.mean_absolute_error(y_test, predictions), metrics.mean_absolute_error(y_test, predictions_rfr))
     st.markdown("The Mean Absolute Error shows that the linear regression model is off by around $57,000 on average.")
     st.markdown("In contrast, the random forest regressor is off by around $34,000 on average. This is a significant improvement.")
-    st.markdown("scikit-learn also has a lot of other regression models that are not covered here. They can be found [here](https://scikit-learn.org/stable/supervised_learning.html#supervised-learning)")
 
 
 
