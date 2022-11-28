@@ -154,11 +154,10 @@ if selected == "home":
         yaxis=(dict(showgrid=False))
     )
 
-    st.write("Data is currently incomplete for 2022.")
-
     left_column, right_column = st.columns(2)
     left_column.plotly_chart(fig_type_price, use_container_width=True)
     right_column.plotly_chart(fig_resale_month, use_container_width=True)
+    st.write("Data is currently incomplete for 2022.")
 
     st.markdown("---")
 
@@ -248,7 +247,7 @@ if selected == "the model":
     st.dataframe(coeff_df)
     rfr = RandomForestRegressor(min_samples_split=3, n_estimators=20, min_samples_leaf = 1)
     rfr.fit(X_train, y_train)
-    st.write("Predict for test set")
+    st.write("***Predict for test set***")
     st.code("predictions = lr.predict(X_test)")
     st.code("predictions_rfr = rfr.predict(X_test)")
     st.markdown("***Plot predictions against actual***")
@@ -283,14 +282,11 @@ if selected == "the model":
     st.code("metrics.r2_score(y_test, predictions)")
     st.code("metrics.r2_score(y_test, predictions_rfr)")
     st.write(metrics.r2_score(y_test, predictions), metrics.r2_score(y_test, predictions_rfr))
-    st.write("The R^2 value is around 0.8, which is decent for a linear regressor. The R^2 value of around 0.9 of the random forest regressor is improved.")
-    st.write("***To find the Mean Absolute Error, we use the mean_absolute_error function***")
-    st.code("metrics.mean_absolute_error(y_test, predictions)")
-    st.code("metrics.mean_absolute_error(y_test, predictions_rfr)")
+    st.write("The R^2 value is around 0.8, which is decent for a linear regressor. The R^2 value of around 0.9 of the random forest regressor is improved. The R^2 value here means that 80%/90% of the variation of the data can be explained by the model. These models seem to be good fits for the data, as price data is known to be noisy.")
     st.write(metrics.mean_absolute_error(y_test, predictions), metrics.mean_absolute_error(y_test, predictions_rfr))
     st.markdown("The Mean Absolute Error shows that the linear regression model is off by around $57,000 on average.")
     st.markdown("In contrast, the random forest regressor is off by around $34,000 on average. This is a significant improvement.")
-    st.markdown("scikit-learn also has a lot of other regression models that are not covered here. They can be found [here](https://scikit-learn.org/stable/supervised_learning.html#supervised-learning)")
+    st.markdown("scikit-learn also has a lot of other regression models that are not covered here. They can be found [here](https://scikit-learn.org/stable/supervised_learning.html#supervised-learning).")
 
 
 
