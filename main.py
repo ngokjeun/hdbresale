@@ -113,7 +113,7 @@ if selected == "home":
     st.markdown("---")
 
     median_price_by_type = (
-        df_selection.groupby(["flat_type"]).median()["resale_price"])
+        df_selection.groupby(["flat_type"]).median(numeric_only=True)["resale_price"])
 
     fig_type_price = px.bar(
         median_price_by_type,
@@ -187,13 +187,13 @@ if selected == "home":
     user_list = [year_select, flat_select, ordinal_date] + town_select_list
     
     lr = LinearRegression()
-    lr.fit(X_train, y_train)
+    lr.fit(X_train.values, y_train.values)
     
     if regression_select == "Linear Regressor":
         price_predicted = lr.predict([user_list])[0]
     elif regression_select == "Random Forest Regressor":
         rfr = RandomForestRegressor(min_samples_split=3, n_estimators=20, min_samples_leaf = 1)
-        rfr.fit(X_train, y_train)
+        rfr.fit(X_train.values, y_train.values)
         price_predicted = rfr.predict([user_list])[0]
 
     html_str = f"""
